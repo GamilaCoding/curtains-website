@@ -4,23 +4,27 @@ import { Button } from "@/components/ui/button"
 const products = [
   {
     title: "ستائر كلاسيكية",
-    image: "/placeholder.svg?height=400&width=300",
+    image:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pexels-fotoaibe-817785.jpg-GBjiXeZMZI5e7RDlagJpHN0GnjakKn.jpeg",
     description: "تصاميم كلاسيكية فاخرة تضيف لمسة أناقة لمنزلك",
   },
   {
     title: "ستائر مودرن",
-    image: "/placeholder.svg?height=400&width=300",
+    image:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pexels-julieaagaard-2766345.jpg-GXWlFZQCcgtnvzM5kQWnfJaSURswxS.jpeg",
     description: "تصاميم عصرية تناسب الديكورات الحديثة",
   },
   {
-    title: "ستائر رول",
-    image: "/placeholder.svg?height=400&width=300",
-    description: "حلول عملية وأنيقة للتحكم في الإضاءة",
+    title: "ستائر شيفون",
+    image:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pexels-pixabay-462197.jpg-UIEgFCe8g9dwPWJOkpybqWpt4Cj3cS.jpeg",
+    description: "ستائر ناعمة تضيف لمسة من الأناقة والجمال",
   },
   {
     title: "ستائر شرائح",
-    image: "/placeholder.svg?height=400&width=300",
-    description: "تصاميم مبتكرة تجمع بين الجمال والوظيفة",
+    image:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pexels-alex-qian-1180283-2343468.jpg-EcBq5Mj3EqYcZcaMTxa4Ps436E6G4H.jpeg",
+    description: "ستائر فخمة بتصميم عصري لمظهر راقي ومميز",
   },
 ]
 
@@ -55,4 +59,3 @@ export function Products() {
     </section>
   )
 }
-
