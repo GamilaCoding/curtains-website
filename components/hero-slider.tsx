@@ -9,17 +9,19 @@ import { motion, AnimatePresence } from "framer-motion"
 const slides = [
   {
     image:
-      "https://sjc.microlink.io/dsIdGE-NM_ykUHzSLg02W-j_j5Q4a1tNQiNp0k_6Y2qV5BUI816csu728Pf0VKR17Hrwu4fXjqL3uiq7XRMFww.jpeg",
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pexels-fotoaibe-817785.jpg-GBjiXeZMZI5e7RDlagJpHN0GnjakKn.jpeg",
     title: "ستائر مخصصة لذوقك",
     subtitle: "اطلب ستائرك من الجوال وبيتك تجيك 🚚",
   },
   {
-    image: "/placeholder.svg?height=1080&width=1920",
+    image:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pexels-pixabay-462197.jpg-UIEgFCe8g9dwPWJOkpybqWpt4Cj3cS.jpeg",
     title: "تصاميم عصرية وحديثة",
     subtitle: "نقدم أحدث موديلات الستائر العصرية",
   },
   {
-    image: "/placeholder.svg?height=1080&width=1920",
+    image:
+      "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pexels-julieaagaard-2766345.jpg-GXWlFZQCcgtnvzM5kQWnfJaSURswxS.jpeg",
     title: "خدمة متكاملة",
     subtitle: "من القياس للتركيب، نهتم بكل التفاصيل",
   },
@@ -116,4 +118,3 @@ export function HeroSlider() {
     </div>
   )
 }
-
