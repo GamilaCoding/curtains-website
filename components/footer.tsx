@@ -62,6 +62,8 @@ export function Footer() {
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm">
           <p>جميع الحقوق محفوظة © {new Date().getFullYear()}</p>
+          <p>Gamila
+        </p>
         </div>
       </div>
     </footer>
