@@ -1,0 +1,115 @@
+name: 🚀 AI Dev Suite (React.js Optimized)
+
+on:
+  push:
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ai-dev-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 1. نظام الكاش لتسريع الأكشن
+      - name: 💾 Cache Ollama Models
+        id: cache-ollama
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama
+          key: ollama-qwen-coder-1.5b
+          restore-keys: |
+            ollama-qwen-
+
+      - name: 🦙 Install Ollama & Pull Model
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          ollama serve &
+          sleep 5
+          if [ "${{ steps.cache-ollama.outputs.cache-hit }}" != "true" ]; then
+            echo "📥 Cache miss: Pulling qwen2.5-coder:1.5b..."
+            ollama pull qwen2.5-coder:1.5b
+          fi
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 📦 Install Python Dependencies
+        run: pip install requests
+
+      - name: 🤖 Generate Docs & React Tests
+        run: |
+          python << 'EOF'
+          import os, requests, subprocess
+
+          MODEL_NAME = "qwen2.5-coder:1.5b"
+          # تعديل المسارات لتناسب React (Components, Hooks, Utils)
+          target_dirs = ["src/components", "src/hooks", "src/utils", "src/pages"]
+
+          try:
+              # الحصول على الملفات المتغيرة في آخر كومت
+              changed_files = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD^', 'HEAD']).decode('utf-8').splitlines()
+          except:
+              changed_files = []
+
+          all_updates = ""
+
+          for path in changed_files:
+              # التحقق من أن الملف داخل المسارات المطلوبة وينتهي بـ js أو jsx أو ts أو tsx
+              if any(path.startswith(d) for d in target_dirs) and (path.endswith(".js") or path.endswith(".jsx") or path.endswith(".ts") or path.endswith(".tsx")) and os.path.exists(path):
+                  print(f"🧠 AI is analyzing React file: {path}")
+                  with open(path, 'r') as f:
+                      code_content = f.read()
+
+                  # 1. توليد توثيق للمكونات (Props, State, Functions)
+                  doc_prompt = f"Create a markdown documentation for this React component/code. List Props, Hooks used, and main functions. ONLY the markdown.\n\n{code_content}"
+                  try:
+                      res_doc = requests.post("http://localhost:11434/api/generate",
+                                            json={"model": MODEL_NAME, "prompt": doc_prompt, "stream": False}, timeout=120)
+                      if res_doc.status_code == 200:
+                          all_updates += f"\n### ⚛️ Component: {path}\n{res_doc.json().get('response', '')}\n"
+                  except Exception as e: print(f"❌ Doc Error: {e}")
+
+                  # 2. توليد Unit Test باستخدام Jest / React Testing Library
+                  test_prompt = f"Write a Vitest or Jest test using React Testing Library for this file. Include basic rendering and interaction tests. Return ONLY the code.\n\n{code_content}"
+                  try:
+                      res_test = requests.post("http://localhost:11434/api/generate",
+                                             json={"model": MODEL_NAME, "prompt": test_prompt, "stream": False}, timeout=180)
+                      if res_test.status_code == 200:
+                          test_code = res_test.json().get('response', '')
+                          # تغيير الامتداد إلى .test.js أو .test.tsx
+                          ext = ".test" + os.path.splitext(path)[1]
+                          test_path = path.replace(os.path.splitext(path)[1], ext)
+                          
+                          # حفظ ملف التيست بجانب الملف الأصلي أو في فولدر __tests__
+                          os.makedirs(os.path.dirname(test_path), exist_ok=True)
+                          with open(test_path, 'w') as f_test:
+                              f_test.write(test_code)
+                          print(f"✅ Test Generated: {test_path}")
+                  except Exception as e: print(f"❌ Test Error: {e}")
+
+          if all_updates:
+              header = "# 📘 AI Generated React Documentation\n\n"
+              existing = ""
+              if os.path.exists("REACT_DOCS.md"):
+                  with open("REACT_DOCS.md", "r") as f:
+                      existing = f.read().replace(header, "")
+              with open("REACT_DOCS.md", "w") as f:
+                  f.write(header + all_updates + "\n---\n" + existing)
+          EOF
+
+      - name: 📤 Push Changes
+        run: |
+          git config --global user.name 'AI React Dev Bot'
+          git config --global user.email 'ai-bot@yourdomain.com'
+          git add REACT_DOCS.md src/
+          git commit -m "docs & tests: auto-generate for React [skip ci]" || exit 0
+          git push
