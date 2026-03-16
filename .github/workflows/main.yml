@@ -110,6 +110,16 @@ jobs:
         run: |
           git config --global user.name 'AI React Dev Bot'
           git config --global user.email 'ai-bot@yourdomain.com'
-          git add REACT_DOCS.md src/
-          git commit -m "docs & tests: auto-generate for React [skip ci]" || exit 0
-          git push
+          
+          # أضف كل التغييرات التي حدثت في src أو ملفات الماركدوان فقط إذا كانت موجودة
+          git add src/ || true
+          [ -f REACT_DOCS.md ] && git add REACT_DOCS.md
+          
+          # التحقق إذا كان هناك أي شيء جاهز للكومت
+          if git diff --staged --quiet; then
+            echo "No changes found to commit. Skipping..."
+          else
+            echo "Changes detected, committing now..."
+            git commit -m "docs & tests: auto-generate via AI [skip ci]"
+            git push
+          fi
