@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 1. نظام الكاش لتسريع الأكشن
+      # 1.actions
       - name: 💾 Cache Ollama Models
         id: cache-ollama
         uses: actions/cache@v4
@@ -51,11 +51,10 @@ jobs:
           import os, requests, subprocess
 
           MODEL_NAME = "qwen2.5-coder:1.5b"
-          # تعديل المسارات لتناسب React (Components, Hooks, Utils)
+           React (Components, Hooks, Utils)
           target_dirs = ["src/components", "src/hooks", "src/utils", "src/pages"]
 
           try:
-              # الحصول على الملفات المتغيرة في آخر كومت
               changed_files = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD^', 'HEAD']).decode('utf-8').splitlines()
           except:
               changed_files = []
@@ -63,13 +62,11 @@ jobs:
           all_updates = ""
 
           for path in changed_files:
-              # التحقق من أن الملف داخل المسارات المطلوبة وينتهي بـ js أو jsx أو ts أو tsx
               if any(path.startswith(d) for d in target_dirs) and (path.endswith(".js") or path.endswith(".jsx") or path.endswith(".ts") or path.endswith(".tsx")) and os.path.exists(path):
                   print(f"🧠 AI is analyzing React file: {path}")
                   with open(path, 'r') as f:
                       code_content = f.read()
 
-                  # 1. توليد توثيق للمكونات (Props, State, Functions)
                   doc_prompt = f"Create a markdown documentation for this React component/code. List Props, Hooks used, and main functions. ONLY the markdown.\n\n{code_content}"
                   try:
                       res_doc = requests.post("http://localhost:11434/api/generate",
@@ -85,11 +82,9 @@ jobs:
                                              json={"model": MODEL_NAME, "prompt": test_prompt, "stream": False}, timeout=180)
                       if res_test.status_code == 200:
                           test_code = res_test.json().get('response', '')
-                          # تغيير الامتداد إلى .test.js أو .test.tsx
                           ext = ".test" + os.path.splitext(path)[1]
                           test_path = path.replace(os.path.splitext(path)[1], ext)
                           
-                          # حفظ ملف التيست بجانب الملف الأصلي أو في فولدر __tests__
                           os.makedirs(os.path.dirname(test_path), exist_ok=True)
                           with open(test_path, 'w') as f_test:
                               f_test.write(test_code)
@@ -111,11 +106,9 @@ jobs:
           git config --global user.name 'AI React Dev Bot'
           git config --global user.email 'ai-bot@yourdomain.com'
           
-          # أضف كل التغييرات التي حدثت في src أو ملفات الماركدوان فقط إذا كانت موجودة
           git add src/ || true
           [ -f REACT_DOCS.md ] && git add REACT_DOCS.md
           
-          # التحقق إذا كان هناك أي شيء جاهز للكومت
           if git diff --staged --quiet; then
             echo "No changes found to commit. Skipping..."
           else
