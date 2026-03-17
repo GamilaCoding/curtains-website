@@ -17,7 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 1.actions
       - name: 💾 Cache Ollama Models
         id: cache-ollama
         uses: actions/cache@v4
@@ -31,9 +30,8 @@ jobs:
         run: |
           curl -fsSL https://ollama.com/install.sh | sh
           ollama serve &
-          sleep 5
+          sleep 10
           if [ "${{ steps.cache-ollama.outputs.cache-hit }}" != "true" ]; then
-            echo "📥 Cache miss: Pulling qwen2.5-coder:1.5b..."
             ollama pull qwen2.5-coder:1.5b
           fi
 
@@ -51,23 +49,32 @@ jobs:
           import os, requests, subprocess
 
           MODEL_NAME = "qwen2.5-coder:1.5b"
-           React (Components, Hooks, Utils)
           target_dirs = ["src/components", "src/hooks", "src/utils", "src/pages"]
 
+          # محاولة الحصول على الملفات المتغيرة بأمان لتجنب خطأ 128
           try:
-              changed_files = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD^', 'HEAD']).decode('utf-8').splitlines()
+              changed_files = subprocess.check_output(['git', 'diff', '--name-only', 'HEAD~1', 'HEAD']).decode('utf-8').splitlines()
           except:
+              print("⚠️ Could not get diff, scanning target directories...")
               changed_files = []
+              for d in target_dirs:
+                  if os.path.exists(d):
+                      for root, dirs, files in os.walk(d):
+                          for file in files:
+                              changed_files.append(os.path.join(root, file))
 
           all_updates = ""
 
           for path in changed_files:
-              if any(path.startswith(d) for d in target_dirs) and (path.endswith(".js") or path.endswith(".jsx") or path.endswith(".ts") or path.endswith(".tsx")) and os.path.exists(path):
-                  print(f"🧠 AI is analyzing React file: {path}")
+              if any(path.startswith(d) for d in target_dirs) and path.endswith(('.js', '.jsx', '.ts', '.tsx')) and os.path.exists(path):
+                  if ".test." in path: continue # تخطي ملفات التيست نفسها
+                  
+                  print(f"🧠 AI is working on: {path}")
                   with open(path, 'r') as f:
                       code_content = f.read()
 
-                  doc_prompt = f"Create a markdown documentation for this React component/code. List Props, Hooks used, and main functions. ONLY the markdown.\n\n{code_content}"
+                  # 1. توليد التوثيق
+                  doc_prompt = f"Create a markdown table for this React component/code. List Props, Description, and Usage. ONLY the markdown.\n\n{code_content}"
                   try:
                       res_doc = requests.post("http://localhost:11434/api/generate",
                                             json={"model": MODEL_NAME, "prompt": doc_prompt, "stream": False}, timeout=120)
@@ -75,8 +82,8 @@ jobs:
                           all_updates += f"\n### ⚛️ Component: {path}\n{res_doc.json().get('response', '')}\n"
                   except Exception as e: print(f"❌ Doc Error: {e}")
 
-                  # 2. توليد Unit Test باستخدام Jest / React Testing Library
-                  test_prompt = f"Write a Vitest or Jest test using React Testing Library for this file. Include basic rendering and interaction tests. Return ONLY the code.\n\n{code_content}"
+                  # 2. توليد الاختبارات (Vitest/Jest)
+                  test_prompt = f"Write a Vitest or Jest test for this React code. Return ONLY the code starting with imports.\n\n{code_content}"
                   try:
                       res_test = requests.post("http://localhost:11434/api/generate",
                                              json={"model": MODEL_NAME, "prompt": test_prompt, "stream": False}, timeout=180)
@@ -84,8 +91,6 @@ jobs:
                           test_code = res_test.json().get('response', '')
                           ext = ".test" + os.path.splitext(path)[1]
                           test_path = path.replace(os.path.splitext(path)[1], ext)
-                          
-                          os.makedirs(os.path.dirname(test_path), exist_ok=True)
                           with open(test_path, 'w') as f_test:
                               f_test.write(test_code)
                           print(f"✅ Test Generated: {test_path}")
@@ -105,14 +110,12 @@ jobs:
         run: |
           git config --global user.name 'AI React Dev Bot'
           git config --global user.email 'ai-bot@yourdomain.com'
+          git add REACT_DOCS.md src/
           
-          git add src/ || true
-          [ -f REACT_DOCS.md ] && git add REACT_DOCS.md
-          
+          # تجنب خطأ 128 عبر التأكد من وجود تغييرات حقيقية
           if git diff --staged --quiet; then
-            echo "No changes found to commit. Skipping..."
+            echo "No changes to commit. Skipping..."
           else
-            echo "Changes detected, committing now..."
             git commit -m "docs & tests: auto-generate via AI [skip ci]"
             git push
           fi
